@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.python-version
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Data & artifacts — never committed
+data/
+*.db
+*.duckdb
+*.parquet
+*.csv
+!tests/**/*.csv
+mlruns/
+models/*.pkl
+models/*.joblib
+
+# dbt
+warehouse/target/
+warehouse/dbt_packages/
+warehouse/logs/
+warehouse/.user.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Docker
+docker/postgres-data/

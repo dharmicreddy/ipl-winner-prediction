@@ -2,7 +2,7 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 2 — Historical backfill (in progress).
+**Status:** Phase 2 — Historical backfill (complete). Next: Phase 3 — Incremental API ingestion.
 
 ## Quick start
 
@@ -17,9 +17,18 @@ docker compose -f docker/docker-compose.yml --env-file .env up -d
 python -m venv .venv
 source .venv/bin/activate    # Windows: .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
-```
 
-More steps will be added as phases land.
+# 4. Apply DB migrations
+python -m ingestion.db.migrate
+
+# 5. Download & load Cricsheet data (2022–2024 by default)
+python -m ingestion.cricsheet.downloader
+python -m ingestion.cricsheet.bronze_loader
+python -m ingestion.cricsheet.silver_parser
+
+# 6. Launch the dashboard
+streamlit run dashboard/app.py
+```
 
 ## Why this project
 
@@ -86,8 +95,8 @@ ipl-winner-prediction/
 | Phase | Focus | Status |
 |---|---|---|
 | 1 | Discovery & design | Complete |
-| 2 | Historical backfill (Cricsheet) | In progress |
-| 3 | Incremental API ingestion | Pending |
+| 2 | Historical backfill (Cricsheet) | Complete |
+| 3 | Incremental API ingestion | Next |
 | 4 | dbt warehouse | Pending |
 | 5 | Feature engineering | Pending |
 | 6 | Modeling + calibration | Pending |

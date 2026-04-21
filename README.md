@@ -2,7 +2,24 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 1 — Discovery & Design (complete). Next: Phase 2 — Historical backfill from Cricsheet.
+**Status:** Phase 2 — Historical backfill (in progress).
+
+## Quick start
+
+```bash
+# 1. Copy env template and adjust if needed
+cp .env.example .env
+
+# 2. Bring up Postgres
+docker compose -f docker/docker-compose.yml --env-file .env up -d
+
+# 3. Create a virtualenv and install
+python -m venv .venv
+source .venv/bin/activate    # Windows: .venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+More steps will be added as phases land.
 
 ## Why this project
 
@@ -32,7 +49,7 @@ flowchart LR
 
 | Layer | Choice |
 |---|---|
-| Ingestion | Python + requests (API / bulk download only) |
+| Ingestion | Python + httpx (API / bulk download only) |
 | Warehouse | PostgreSQL (Docker local, Neon free optional) |
 | Transformation | dbt Core |
 | ML | scikit-learn -> XGBoost + calibration, MLflow tracking |
@@ -41,3 +58,49 @@ flowchart LR
 | CI | GitHub Actions |
 
 See the ADRs in `docs/decisions/` for the rationale behind each choice.
+
+## Repository layout
+
+```
+ipl-winner-prediction/
+├── README.md
+├── docs/
+│   ├── problem-definition.md
+│   ├── data-sources.md
+│   └── decisions/            # ADRs
+├── ingestion/                # Phase 2+
+├── warehouse/                # dbt project, Phase 4
+├── features/                 # Phase 5
+├── models/                   # Phase 6
+├── dashboard/                # Streamlit app, Phase 8
+├── orchestration/            # Airflow DAGs + GH Actions workflows
+├── tests/
+├── docker/
+├── .github/workflows/
+├── pyproject.toml
+└── .env.example
+```
+
+## Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| 1 | Discovery & design | Complete |
+| 2 | Historical backfill (Cricsheet) | In progress |
+| 3 | Incremental API ingestion | Pending |
+| 4 | dbt warehouse | Pending |
+| 5 | Feature engineering | Pending |
+| 6 | Modeling + calibration | Pending |
+| 7 | Orchestration | Pending |
+| 8 | Dashboard + write-up | Pending |
+
+End of Phase 2: a thin end-to-end vertical slice — one season loaded, one gold view, one Streamlit page locally.
+
+## Attribution
+
+- Historical match data: [Cricsheet](https://cricsheet.org) — licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/).
+- Venue metadata: [Wikipedia](https://en.wikipedia.org) — CC BY-SA 4.0.
+
+## License
+
+Code: MIT. Derived data retains the license of its source (Cricsheet: ODbL; Wikipedia: CC BY-SA).

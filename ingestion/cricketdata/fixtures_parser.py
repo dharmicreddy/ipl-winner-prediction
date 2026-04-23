@@ -158,6 +158,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     result = parse_bronze_to_silver()
     print(
-        f"Wrote {result['rows_written']} rows "
-        f"({result['ipl_rows']} IPL, {result['errors']} errors)"
+        f"Wrote {result['rows_written']} rows ({result['ipl_rows']} IPL, {result['errors']} errors)"
     )

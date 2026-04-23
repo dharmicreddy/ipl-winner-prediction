@@ -130,6 +130,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     result = parse_bronze_to_silver()
     print(
-        f"Parsed {result['venues']} venues, "
-        f"{result['aliases']} aliases ({result['errors']} errors)"
+        f"Parsed {result['venues']} venues, {result['aliases']} aliases ({result['errors']} errors)"
     )

@@ -2,7 +2,7 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 2 — Historical backfill (complete). Next: Phase 3 — Incremental API ingestion.
+**Status:** Phase 3 — Incremental API ingestion (complete). Next: Phase 4 — dbt warehouse.
 
 ## Quick start
 
@@ -26,9 +26,16 @@ python -m ingestion.cricsheet.downloader
 python -m ingestion.cricsheet.bronze_loader
 python -m ingestion.cricsheet.silver_parser
 
-# 6. Launch the dashboard
+# 6. Fetch Wikipedia venue metadata (CC BY-SA)
+python -m ingestion.wikipedia.venue_client
+python -m ingestion.wikipedia.venue_parser
+
+# 7. Fetch upcoming fixtures from CricketData.org (requires API key in .env)
+python -m ingestion.cricketdata.fixtures_client
+python -m ingestion.cricketdata.fixtures_parser
+
+# 8. Launch the dashboard
 streamlit run dashboard/app.py
-```
 
 ## Why this project
 
@@ -96,8 +103,8 @@ ipl-winner-prediction/
 |---|---|---|
 | 1 | Discovery & design | Complete |
 | 2 | Historical backfill (Cricsheet) | Complete |
-| 3 | Incremental API ingestion | Next |
-| 4 | dbt warehouse | Pending |
+| 3 | Incremental API ingestion | Complete |
+| 4 | dbt warehouse | Next |
 | 5 | Feature engineering | Pending |
 | 6 | Modeling + calibration | Pending |
 | 7 | Orchestration | Pending |
@@ -109,6 +116,7 @@ End of Phase 2: a thin end-to-end vertical slice — one season loaded, one gold
 
 - Historical match data: [Cricsheet](https://cricsheet.org) — licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/).
 - Venue metadata: [Wikipedia](https://en.wikipedia.org) — CC BY-SA 4.0.
+- Upcoming fixtures: [CricketData.org](https://cricketdata.org) — used per their published terms of service.
 
 ## License
 

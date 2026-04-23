@@ -10,7 +10,13 @@ venues:
   - venue: "M Chinnaswamy Stadium"
     wiki_title: "M._Chinnaswamy_Stadium"
 
+  - venue: "M Chinnaswamy Stadium, Bengaluru"
+    wiki_title: "M._Chinnaswamy_Stadium"
+
   - venue: "Wankhede Stadium"
+    wiki_title: "Wankhede_Stadium"
+
+  - venue: "Wankhede Stadium, Mumbai"
     wiki_title: "Wankhede_Stadium"
 
   - venue: "MA Chidambaram Stadium, Chepauk"
@@ -37,10 +43,16 @@ venues:
   - venue: "Punjab Cricket Association IS Bindra Stadium, Mohali"
     wiki_title: "Punjab_Cricket_Association_IS_Bindra_Stadium"
 
+  - venue: "Punjab Cricket Association IS Bindra Stadium, Mohali, Chandigarh"
+    wiki_title: "Punjab_Cricket_Association_IS_Bindra_Stadium"
+
   - venue: "Rajiv Gandhi International Stadium"
     wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
 
   - venue: "Rajiv Gandhi International Stadium, Uppal"
+    wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
+
+  - venue: "Rajiv Gandhi International Stadium, Uppal, Hyderabad"
     wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
 
   - venue: "Sawai Mansingh Stadium"
@@ -84,3 +96,12 @@ venues:
 
   - venue: "Himachal Pradesh Cricket Association Stadium, Dharamsala"
     wiki_title: "Himachal_Pradesh_Cricket_Association_Stadium"
+
+  - venue: "Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium, Lucknow"
+    wiki_title: "Ekana_Cricket_Stadium"
+
+  - venue: "Maharaja Yadavindra Singh International Cricket Stadium, Mullanpur"
+    wiki_title: "Maharaja_Yadavindra_Singh_International_Cricket_Stadium"
+
+  - venue: "Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium, Visakhapatnam"
+    wiki_title: "ACA-VDCA_Cricket_Stadium"

@@ -30,6 +30,17 @@ st.set_page_config(
 
 
 @st.cache_data(ttl=300)
+def load_upcoming_matches() -> pd.DataFrame:
+    """Pull upcoming IPL fixtures from gold.upcoming_ipl_matches."""
+    query = """
+        SELECT match_date, team_1, team_2, venue, status, series_name
+        FROM gold.upcoming_ipl_matches
+    """
+    with get_connection() as conn:
+        return pd.read_sql(query, conn)
+
+
+@st.cache_data(ttl=300)
 def load_matches() -> pd.DataFrame:
     """Pull gold.fact_matches into a DataFrame. Cached for 5 minutes."""
     query = """
@@ -81,7 +92,17 @@ def main() -> None:
     bf_by_season["bat_first_win_rate"] = (bf_by_season["bat_first_win_rate"] * 100).round(1)
     st.bar_chart(bf_by_season, x="season", y="bat_first_win_rate")
 
+    # Phase 3 addition: upcoming IPL matches from CricketData
     st.divider()
+    st.subheader("Upcoming IPL matches")
+    try:
+        upcoming_df = load_upcoming_matches()
+        if upcoming_df.empty:
+            st.info("No upcoming IPL matches in the current fixtures data.")
+        else:
+            st.dataframe(upcoming_df, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"Upcoming matches unavailable: {exc}")
 
     # Raw data at the bottom
     st.subheader("Recent matches (latest 20)")

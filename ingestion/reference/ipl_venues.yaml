@@ -1,0 +1,107 @@
+# IPL venues mapped to their Wikipedia page titles.
+#
+# Cricsheet uses varied spellings across seasons. We maintain this list
+# manually so we hit canonical Wikipedia pages once per venue.
+#
+# To add a venue: find its Wikipedia URL, copy the final path segment,
+# and add an entry. Use underscores in wiki_title exactly as the URL shows.
+
+venues:
+  - venue: "M Chinnaswamy Stadium"
+    wiki_title: "M._Chinnaswamy_Stadium"
+
+  - venue: "M Chinnaswamy Stadium, Bengaluru"
+    wiki_title: "M._Chinnaswamy_Stadium"
+
+  - venue: "Wankhede Stadium"
+    wiki_title: "Wankhede_Stadium"
+
+  - venue: "Wankhede Stadium, Mumbai"
+    wiki_title: "Wankhede_Stadium"
+
+  - venue: "MA Chidambaram Stadium, Chepauk"
+    wiki_title: "M._A._Chidambaram_Stadium"
+
+  - venue: "MA Chidambaram Stadium, Chepauk, Chennai"
+    wiki_title: "M._A._Chidambaram_Stadium"
+
+  - venue: "Arun Jaitley Stadium"
+    wiki_title: "Arun_Jaitley_Stadium"
+
+  - venue: "Arun Jaitley Stadium, Delhi"
+    wiki_title: "Arun_Jaitley_Stadium"
+
+  - venue: "Eden Gardens"
+    wiki_title: "Eden_Gardens"
+
+  - venue: "Eden Gardens, Kolkata"
+    wiki_title: "Eden_Gardens"
+
+  - venue: "Punjab Cricket Association IS Bindra Stadium"
+    wiki_title: "Punjab_Cricket_Association_IS_Bindra_Stadium"
+
+  - venue: "Punjab Cricket Association IS Bindra Stadium, Mohali"
+    wiki_title: "Punjab_Cricket_Association_IS_Bindra_Stadium"
+
+  - venue: "Punjab Cricket Association IS Bindra Stadium, Mohali, Chandigarh"
+    wiki_title: "Punjab_Cricket_Association_IS_Bindra_Stadium"
+
+  - venue: "Rajiv Gandhi International Stadium"
+    wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
+
+  - venue: "Rajiv Gandhi International Stadium, Uppal"
+    wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
+
+  - venue: "Rajiv Gandhi International Stadium, Uppal, Hyderabad"
+    wiki_title: "Rajiv_Gandhi_International_Cricket_Stadium"
+
+  - venue: "Sawai Mansingh Stadium"
+    wiki_title: "Sawai_Mansingh_Stadium"
+
+  - venue: "Sawai Mansingh Stadium, Jaipur"
+    wiki_title: "Sawai_Mansingh_Stadium"
+
+  - venue: "Narendra Modi Stadium"
+    wiki_title: "Narendra_Modi_Stadium"
+
+  - venue: "Narendra Modi Stadium, Ahmedabad"
+    wiki_title: "Narendra_Modi_Stadium"
+
+  - venue: "Brabourne Stadium"
+    wiki_title: "Brabourne_Stadium"
+
+  - venue: "Brabourne Stadium, Mumbai"
+    wiki_title: "Brabourne_Stadium"
+
+  - venue: "Dr DY Patil Sports Academy"
+    wiki_title: "D._Y._Patil_Stadium"
+
+  - venue: "Dr DY Patil Sports Academy, Mumbai"
+    wiki_title: "D._Y._Patil_Stadium"
+
+  - venue: "Maharashtra Cricket Association Stadium"
+    wiki_title: "Maharashtra_Cricket_Association_Stadium"
+
+  - venue: "Maharashtra Cricket Association Stadium, Pune"
+    wiki_title: "Maharashtra_Cricket_Association_Stadium"
+
+  - venue: "Barsapara Cricket Stadium"
+    wiki_title: "Barsapara_Cricket_Stadium"
+
+  - venue: "Barsapara Cricket Stadium, Guwahati"
+    wiki_title: "Barsapara_Cricket_Stadium"
+
+  - venue: "Himachal Pradesh Cricket Association Stadium"
+    wiki_title: "Himachal_Pradesh_Cricket_Association_Stadium"
+
+  - venue: "Himachal Pradesh Cricket Association Stadium, Dharamsala"
+    wiki_title: "Himachal_Pradesh_Cricket_Association_Stadium"
+
+  - venue: "Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium, Lucknow"
+    wiki_title: "Ekana_Cricket_Stadium"
+
+  - venue: "Maharaja Yadavindra Singh International Cricket Stadium, Mullanpur"
+    wiki_title: "Maharaja_Yadavindra_Singh_International_Cricket_Stadium"
+
+  - venue: "Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium, Visakhapatnam"
+    wiki_title: "ACA-VDCA_Cricket_Stadium"

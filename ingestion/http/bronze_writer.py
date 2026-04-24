@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlparse
 
 from psycopg.types.json import Json
 
@@ -39,5 +40,8 @@ def land_response(source: str, response: FetchedResponse) -> int:
             ),
         )
         (response_id,) = cur.fetchone()
-    logger.info("Landed %s response for %s -> bronze row %d", source, response.url, response_id)
+    # Strip query string to avoid leaking API keys in logs. Full URL stays in bronze.
+    parsed = urlparse(response.url)
+    loggable_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+    logger.info("Landed %s response for %s -> bronze row %d", source, loggable_url, response_id)
     return response_id

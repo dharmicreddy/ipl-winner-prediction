@@ -20,6 +20,9 @@ from ingestion.http.client import HTTPClient
 from ingestion.http.rate_limiter import TokenBucket
 
 logger = logging.getLogger(__name__)
+# Silence httpx INFO logging — it prints full URLs. Harmless for Wikipedia
+# (no API key in use) but kept for consistency with other clients.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 SOURCE = "wikipedia"
 WIKI_SUMMARY_URL_TEMPLATE = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"

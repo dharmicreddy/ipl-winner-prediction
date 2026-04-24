@@ -24,6 +24,9 @@ from ingestion.http.client import HTTPClient
 from ingestion.http.rate_limiter import TokenBucket
 
 logger = logging.getLogger(__name__)
+# Silence httpx INFO logging — it prints full URLs including the apikey query param.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 load_dotenv()
 

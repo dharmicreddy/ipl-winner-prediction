@@ -1,8 +1,8 @@
 """Wikipedia venue parser.
 
 Reads the latest bronze.http_responses row per URL (source='wikipedia'),
-validates the payload via pydantic, and upserts silver.venues plus
-silver.venue_aliases (the Cricsheet-spelling to canonical mapping).
+validates the payload via pydantic, and upserts silver_raw.venues plus
+silver_raw.venue_aliases (the Cricsheet-spelling to canonical mapping).
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ SELECT_LATEST_SQL = """
 """
 
 VENUE_UPSERT_SQL = """
-    INSERT INTO silver.venues (
+    INSERT INTO silver_raw.venues (
         wiki_title, display_title, description, extract,
         latitude, longitude, wikipedia_url,
         content_sha256, raw_response_id
@@ -48,7 +48,7 @@ VENUE_UPSERT_SQL = """
 """
 
 ALIAS_UPSERT_SQL = """
-    INSERT INTO silver.venue_aliases (venue_alias, wiki_title)
+    INSERT INTO silver_raw.venue_aliases (venue_alias, wiki_title)
     VALUES (%s, %s)
     ON CONFLICT (venue_alias) DO UPDATE SET wiki_title = EXCLUDED.wiki_title
 """
@@ -97,7 +97,7 @@ def parse_bronze_to_silver() -> dict[str, int]:
             read_cur.execute(SELECT_LATEST_SQL)
             bronze_rows = read_cur.fetchall()
 
-        logger.info("Parsing %d Wikipedia bronze rows into silver.venues", len(bronze_rows))
+        logger.info("Parsing %d Wikipedia bronze rows into silver_raw.venues", len(bronze_rows))
 
         with conn.cursor() as write_cur:
             for response_id, url, body, sha in bronze_rows:

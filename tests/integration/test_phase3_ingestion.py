@@ -56,7 +56,7 @@ def _cleanup():
         # Delete silver first (child rows), then bronze (parents).
         cur.execute(
             """
-            DELETE FROM silver.fixtures
+            DELETE FROM silver_raw.fixtures
             WHERE raw_response_id IN (
                 SELECT response_id FROM bronze.http_responses WHERE url = %s
             )
@@ -64,7 +64,7 @@ def _cleanup():
             (CRICKETDATA_TEST_URL,),
         )
         cur.execute(
-            "DELETE FROM silver.venues WHERE wiki_title = %s",
+            "DELETE FROM silver_raw.venues WHERE wiki_title = %s",
             ("Wankhede_Stadium_TEST_INTEGRATION",),
         )
         cur.execute(
@@ -102,7 +102,7 @@ def test_wikipedia_pipeline_end_to_end():
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            "SELECT display_title, latitude FROM silver.venues WHERE wiki_title = %s",
+            "SELECT display_title, latitude FROM silver_raw.venues WHERE wiki_title = %s",
             ("Wankhede_Stadium_TEST_INTEGRATION",),
         )
         row = cur.fetchone()

@@ -1,7 +1,7 @@
 """Pydantic models for CricketData.org currentMatches responses.
 
 We only model the fields we use. The API returns rich data but we need
-just enough to populate silver.fixtures.
+just enough to populate silver_raw.fixtures.
 """
 
 from __future__ import annotations

@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: silver_raw
+    description: >
+      Python-populated typed rows. Output of the bronze -> silver parsers
+      in `ingestion/`. dbt treats these as raw inputs and builds the
+      cleaned `silver` namespace on top.
+    schema: silver_raw
+    tables:
+      - name: matches
+        description: "One row per IPL match from Cricsheet."
+      - name: deliveries
+        description: "One row per ball bowled. ~52k rows across all matches."
+      - name: venues
+        description: "One row per canonical Wikipedia venue page."
+      - name: venue_aliases
+        description: "Maps Cricsheet venue spellings to canonical wiki_title."
+      - name: fixtures
+        description: "Upcoming and recent matches from CricketData.org."

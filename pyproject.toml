@@ -12,6 +12,8 @@ dependencies = [
     "streamlit>=1.38",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
+    "dbt-core>=1.8",
+    "dbt-postgres>=1.8",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,104 @@
+version: 2
+
+models:
+  - name: dim_teams
+    description: "One row per canonical team. Resolves rebrandings via team_canonical seed."
+    columns:
+      - name: team_canonical
+        description: "Canonical team name (e.g. 'Royal Challengers Bengaluru')."
+        tests:
+          - not_null
+          - unique
+      - name: team_short_name
+        description: "Three-letter abbreviation (RCB, MI, CSK, etc.)."
+        tests:
+          - not_null
+
+  - name: dim_venues
+    description: "One row per canonical Wikipedia venue page."
+    columns:
+      - name: wiki_title
+        tests:
+          - not_null
+          - unique
+      - name: display_title
+        tests:
+          - not_null
+
+  - name: dim_players
+    description: "One row per distinct player. Counts derived from deliveries."
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+          - unique
+
+  - name: fact_matches
+    description: "One row per IPL match with derived bat-first columns. Excludes no-result matches."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+      - name: season
+        tests:
+          - not_null
+      - name: match_date
+        tests:
+          - not_null
+      - name: team_home
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_canonical
+      - name: team_away
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_canonical
+      - name: winner
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_canonical
+      - name: batting_first
+        tests:
+          - not_null
+      - name: batting_first_won
+        tests:
+          - not_null
+
+  - name: fact_ball_by_ball
+    description: "Every delivery enriched with match and venue context. Surrogate delivery_id."
+    columns:
+      - name: delivery_id
+        tests:
+          - not_null
+          - unique
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: innings
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+
+  - name: upcoming_ipl_matches
+    description: "Live or upcoming IPL matches for the dashboard."
+    columns:
+      - name: fixture_id
+        tests:
+          - not_null
+          - unique

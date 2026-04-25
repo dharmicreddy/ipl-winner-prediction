@@ -1,7 +1,7 @@
 """CricketData.org fixtures client.
 
 Fetches the currentMatches endpoint — a list of recent and upcoming matches
-across all cricket formats. The parser filters to IPL in silver.
+across all cricket formats. The parser filters to IPL in silver_raw.
 
 Free tier constraints:
 - Requires API key (CRICKETDATA_API_KEY env var)

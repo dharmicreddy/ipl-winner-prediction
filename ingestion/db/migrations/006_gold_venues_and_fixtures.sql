@@ -1,39 +1,15 @@
--- Migration 006: gold venue dimension and upcoming matches view
--- Phase 3 / Chunk 3.5
+-- Migration 006: gold.dim_venues + gold.upcoming_ipl_matches (RETIRED)
 --
--- Joins silver.matches to silver.venues via silver.venue_aliases so that
--- Phase 5 feature engineering can access venue attributes (lat/lng, descriptions)
--- without having to know about the Cricsheet-vs-Wikipedia name mapping.
-
-CREATE OR REPLACE VIEW gold.dim_venues AS
-SELECT
-    a.venue_alias        AS venue_raw,     -- as it appears in silver.matches.venue
-    v.wiki_title,
-    v.display_title,
-    v.description,
-    v.extract,
-    v.latitude,
-    v.longitude,
-    v.wikipedia_url
-FROM silver.venue_aliases a
-JOIN silver.venues v ON v.wiki_title = a.wiki_title;
-
--- Dashboard-facing view: upcoming or live IPL matches.
--- Status filtering keeps only matches that haven't ended.
-CREATE OR REPLACE VIEW gold.upcoming_ipl_matches AS
-SELECT
-    fixture_id,
-    match_name,
-    match_date,
-    team_1,
-    team_2,
-    venue,
-    status,
-    series_name
-FROM silver.fixtures
-WHERE is_ipl = true
-  AND (status IS NULL OR status NOT ILIKE '%won by%')
-ORDER BY match_date;
+-- This migration originally created two gold views via raw SQL.
+-- As of Phase 4 / Chunk 4.3, those views are built and owned by dbt:
+--   - gold.dim_venues          → warehouse/models/gold/dim_venues.sql
+--   - gold.upcoming_ipl_matches → warehouse/models/gold/upcoming_ipl_matches.sql
+--
+-- Migration 007 drops the old gold views, and dbt rebuilds them via
+-- `dbt build --project-dir warehouse`.
+--
+-- This file is preserved as a no-op so existing migration sequences stay
+-- intact. Do NOT delete or renumber.
 
 INSERT INTO public.schema_migrations (version)
 VALUES ('006_gold_venues_and_fixtures')

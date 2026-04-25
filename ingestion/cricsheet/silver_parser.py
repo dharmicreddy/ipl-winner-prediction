@@ -1,7 +1,7 @@
 """Silver parser for Cricsheet data.
 
 Reads bronze.cricsheet_matches, parses each JSON via pydantic models,
-upserts to silver.matches and silver.deliveries.
+upserts to silver_raw.matches and silver_raw.deliveries.
 
 Super-over deliveries are skipped (innings where super_over=True).
 """
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 MATCH_UPSERT_SQL = """
-    INSERT INTO silver.matches (
+    INSERT INTO silver_raw.matches (
         match_id, season, match_date, venue, city,
         team_home, team_away, toss_winner, toss_decision,
         winner, win_margin_type, win_margin, method,
@@ -47,10 +47,10 @@ MATCH_UPSERT_SQL = """
         parsed_at        = now()
 """
 
-DELIVERIES_DELETE_SQL = "DELETE FROM silver.deliveries WHERE match_id = %s"
+DELIVERIES_DELETE_SQL = "DELETE FROM silver_raw.deliveries WHERE match_id = %s"
 
 DELIVERIES_INSERT_SQL = """
-    INSERT INTO silver.deliveries (
+    INSERT INTO silver_raw.deliveries (
         match_id, innings, over_number, ball_in_over,
         batting_team, bowling_team,
         batter, non_striker, bowler,
@@ -168,7 +168,7 @@ def _build_delivery_row(
 
 
 def parse_bronze_to_silver(limit: int | None = None) -> dict[str, int]:
-    """Parse every bronze row into silver. Returns counts.
+    """Parse every bronze row into silver_raw. Returns counts.
 
     Args:
         limit: if set, parse only the first N bronze rows (useful for testing).
@@ -191,7 +191,7 @@ def parse_bronze_to_silver(limit: int | None = None) -> dict[str, int]:
             read_cur.execute(query)
             bronze_rows = read_cur.fetchall()
 
-        logger.info("Parsing %d bronze rows into silver", len(bronze_rows))
+        logger.info("Parsing %d bronze rows into silver_raw", len(bronze_rows))
 
         with conn.cursor() as write_cur:
             for match_id, raw_content, ingested_at in bronze_rows:

@@ -35,6 +35,7 @@ def load_upcoming_matches() -> pd.DataFrame:
     query = """
         SELECT match_date, team_1, team_2, venue, status, series_name
         FROM gold.upcoming_ipl_matches
+        ORDER BY match_date
     """
     with get_connection() as conn:
         return pd.read_sql(query, conn)
@@ -42,7 +43,11 @@ def load_upcoming_matches() -> pd.DataFrame:
 
 @st.cache_data(ttl=300)
 def load_matches() -> pd.DataFrame:
-    """Pull gold.fact_matches into a DataFrame. Cached for 5 minutes."""
+    """Pull completed matches from gold.fact_matches.
+
+    Returns one row per match with derived bat-first columns.
+    Cached for 5 minutes.
+    """
     query = """
         SELECT season, match_date, venue, city,
                team_home, team_away, toss_winner, toss_decision,
@@ -56,10 +61,9 @@ def load_matches() -> pd.DataFrame:
 
 
 def main() -> None:
-    st.title("🏏 IPL Prediction — Phase 2 Vertical Slice")
+    st.title("🏏 IPL Match Predictor")
     st.caption(
-        "Thin end-to-end slice. Data sourced from Cricsheet (ODbL). "
-        "Phase 8 will replace this with the real dashboard."
+        "Data: Cricsheet (ODbL), Wikipedia (CC BY-SA), CricketData.org. Warehouse built via dbt."
     )
 
     df = load_matches()
@@ -81,7 +85,6 @@ def main() -> None:
     by_season = df.groupby("season").size().reset_index(name="matches")
     st.bar_chart(by_season, x="season", y="matches")
 
-    # Bat-first vs bat-second win rate — our baseline preview
     st.subheader("Batting first: win rate by season")
     bf_by_season = (
         df.groupby("season")["batting_first_won"]

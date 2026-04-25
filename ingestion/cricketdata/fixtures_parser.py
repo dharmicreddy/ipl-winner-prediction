@@ -1,7 +1,7 @@
 """CricketData.org fixtures parser.
 
 Reads bronze.http_responses rows where source='cricketdata', validates each
-match via pydantic, and upserts silver.fixtures.
+match via pydantic, and upserts silver_raw.fixtures.
 
 IPL detection is heuristic: any match whose `name` contains "Indian Premier
 League" (case-insensitive) is tagged is_ipl=true. The alternative — resolving
@@ -30,7 +30,7 @@ SELECT_BRONZE_SQL = """
 """
 
 FIXTURE_UPSERT_SQL = """
-    INSERT INTO silver.fixtures (
+    INSERT INTO silver_raw.fixtures (
         fixture_id, match_name, match_type, status,
         venue, match_date, series_name,
         team_1, team_2, is_ipl, raw_response_id
@@ -106,7 +106,7 @@ def parse_match(response_id: int, match: CricketDataMatch) -> tuple:
 
 
 def parse_bronze_to_silver() -> dict[str, int]:
-    """Parse all CricketData bronze rows into silver.fixtures.
+    """Parse all CricketData bronze rows into silver_raw.fixtures.
 
     Returns counts: {"rows_written": N, "ipl_rows": K, "errors": E}.
     """

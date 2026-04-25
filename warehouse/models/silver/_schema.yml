@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: silver__matches
+    description: "One row per IPL match. Sourced from Cricsheet via silver_raw.matches."
+    columns:
+      - name: match_id
+        description: "Cricsheet match identifier."
+        tests:
+          - not_null
+          - unique
+      - name: season
+        description: "IPL season year as a string (e.g. '2024')."
+        tests:
+          - not_null
+      - name: match_date
+        tests:
+          - not_null
+      - name: team_home
+        tests:
+          - not_null
+      - name: team_away
+        tests:
+          - not_null
+
+  - name: silver__deliveries
+    description: "One row per ball bowled across all matches. ~52k rows."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver__matches')
+                field: match_id
+      - name: innings
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+      - name: over_number
+        tests:
+          - not_null
+      - name: ball_in_over
+        tests:
+          - not_null
+      - name: batting_team
+        tests:
+          - not_null
+      - name: bowling_team
+        tests:
+          - not_null
+
+  - name: silver__venues
+    description: "One row per canonical Wikipedia venue page."
+    columns:
+      - name: wiki_title
+        tests:
+          - not_null
+          - unique
+      - name: display_title
+        tests:
+          - not_null
+
+  - name: silver__venue_aliases
+    description: "Maps Cricsheet venue spellings to canonical wiki_title."
+    columns:
+      - name: venue_alias
+        tests:
+          - not_null
+          - unique
+      - name: wiki_title
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver__venues')
+                field: wiki_title
+
+  - name: silver__fixtures
+    description: "Upcoming and recent matches from CricketData.org."
+    columns:
+      - name: fixture_id
+        tests:
+          - not_null
+          - unique
+      - name: is_ipl
+        tests:
+          - not_null

@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: features__team_form
+    description: "Team form features: win rate over last 5 matches as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_date
+        tests:
+          - not_null
+      - name: team_home
+        tests:
+          - not_null
+      - name: team_away
+        tests:
+          - not_null
+      # team_home_form_5 and team_away_form_5 are NULL for early-season matches;
+      # we don't enforce not_null here.
+
+  - name: features__head_to_head
+    description: "Head-to-head historical record between teams as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: h2h_matches_played
+        tests:
+          - not_null
+      - name: team_home_h2h_wins
+        tests:
+          - not_null

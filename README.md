@@ -2,7 +2,7 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 3 — Incremental API ingestion (complete). Next: Phase 4 — dbt warehouse.
+**Status:** Phase 4 — dbt warehouse (complete). Next: Phase 5 — Feature engineering.
 
 ## Quick start
 
@@ -34,7 +34,12 @@ python -m ingestion.wikipedia.venue_parser
 python -m ingestion.cricketdata.fixtures_client
 python -m ingestion.cricketdata.fixtures_parser
 
-# 8. Launch the dashboard
+# 8. Build the dbt warehouse (silver + gold views, seeds, tests)
+dbt deps --project-dir warehouse
+dbt seed --project-dir warehouse
+dbt build --project-dir warehouse
+
+# 9. Launch the dashboard
 streamlit run dashboard/app.py
 
 ## Why this project
@@ -117,13 +122,13 @@ ipl-winner-prediction/
 | 1 | Discovery & design | Complete |
 | 2 | Historical backfill (Cricsheet) | Complete |
 | 3 | Incremental API ingestion | Complete |
-| 4 | dbt warehouse | Next |
-| 5 | Feature engineering | Pending |
+| 4 | dbt warehouse | Complete |
+| 5 | Feature engineering | Next |
 | 6 | Modeling + calibration | Pending |
 | 7 | Orchestration | Pending |
 | 8 | Dashboard + write-up | Pending |
 
-End of Phase 2: a thin end-to-end vertical slice — one season loaded, one gold view, one Streamlit page locally.
+End of Phase 4: dbt-managed silver + gold layers with star schema, SCD-2 snapshots, and 52 passing data tests. The dashboard reads bat-first metrics directly from `gold.fact_matches`.
 
 ## Attribution
 

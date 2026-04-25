@@ -61,10 +61,9 @@ def load_matches() -> pd.DataFrame:
 
 
 def main() -> None:
-    st.title("🏏 IPL Prediction — Phase 2 Vertical Slice")
+    st.title("🏏 IPL Match Predictor")
     st.caption(
-        "Thin end-to-end slice. Data sourced from Cricsheet (ODbL). "
-        "Phase 8 will replace this with the real dashboard."
+        "Data: Cricsheet (ODbL), Wikipedia (CC BY-SA), CricketData.org. Warehouse built via dbt."
     )
 
     df = load_matches()

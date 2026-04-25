@@ -41,3 +41,33 @@ models:
       - name: team_home_h2h_wins
         tests:
           - not_null
+
+  - name: features__venue_effects
+    description: "Venue-specific bat-first win rate as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: venue_matches_played
+        tests:
+          - not_null
+
+  - name: features__temporal
+    description: "Time-based features: rest days per team, match number in season."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_number_in_season
+        tests:
+          - not_null

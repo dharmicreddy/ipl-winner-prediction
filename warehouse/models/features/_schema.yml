@@ -125,3 +125,30 @@ models:
               arguments:
                 min_value: 0
                 inclusive: true
+
+  - name: features__match_set
+    description: "Wide feature set per match. Joins all features + label + walk-forward split."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_date
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: batting_first_won
+        tests:
+          - not_null
+      - name: split
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['train', 'val', 'holdout']

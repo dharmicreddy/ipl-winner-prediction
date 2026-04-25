@@ -1,0 +1,154 @@
+version: 2
+
+models:
+  - name: features__team_form
+    description: "Team form features: win rate over last 5 matches as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_date
+        tests:
+          - not_null
+      - name: team_home
+        tests:
+          - not_null
+      - name: team_away
+        tests:
+          - not_null
+      - name: team_home_form_5
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+                inclusive: true
+      - name: team_away_form_5
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+                inclusive: true
+
+  - name: features__head_to_head
+    description: "Head-to-head historical record between teams as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: h2h_matches_played
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+      - name: team_home_h2h_wins
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+      - name: team_home_h2h_win_rate
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+                inclusive: true
+
+  - name: features__venue_effects
+    description: "Venue-specific bat-first win rate as-of match date."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: venue_matches_played
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+      - name: venue_bat_first_win_rate
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+                inclusive: true
+
+  - name: features__temporal
+    description: "Time-based features: rest days per team, match number in season."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_number_in_season
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                inclusive: true
+      - name: days_since_team_home_last_match
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+      - name: days_since_team_away_last_match
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+
+  - name: features__match_set
+    description: "Wide feature set per match. Joins all features + label + walk-forward split."
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fact_matches')
+                field: match_id
+      - name: match_date
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: batting_first_won
+        tests:
+          - not_null
+      - name: split
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['train', 'val', 'holdout']

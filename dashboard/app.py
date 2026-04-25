@@ -31,16 +31,10 @@ st.set_page_config(
 
 @st.cache_data(ttl=300)
 def load_upcoming_matches() -> pd.DataFrame:
-    """Pull upcoming IPL fixtures from dbt-built silver.
-
-    Phase 4 temporary: queries silver.silver__fixtures directly. Will switch
-    to gold.upcoming_ipl_matches once rebuilt via dbt in Chunk 4.3.
-    """
+    """Pull upcoming IPL fixtures from gold.upcoming_ipl_matches."""
     query = """
         SELECT match_date, team_1, team_2, venue, status, series_name
-        FROM silver.silver__fixtures
-        WHERE is_ipl = true
-          AND (status IS NULL OR status NOT ILIKE '%won by%')
+        FROM gold.upcoming_ipl_matches
         ORDER BY match_date
     """
     with get_connection() as conn:
@@ -49,17 +43,17 @@ def load_upcoming_matches() -> pd.DataFrame:
 
 @st.cache_data(ttl=300)
 def load_matches() -> pd.DataFrame:
-    """Pull completed matches from the dbt-built silver layer.
+    """Pull completed matches from gold.fact_matches.
 
-    Phase 4 temporary: queries silver.silver__matches directly. Will switch
-    to gold.fact_matches once it's rebuilt via dbt in Chunk 4.3.
+    Returns one row per match with derived bat-first columns.
+    Cached for 5 minutes.
     """
     query = """
         SELECT season, match_date, venue, city,
                team_home, team_away, toss_winner, toss_decision,
-               winner, win_margin_type, win_margin
-        FROM silver.silver__matches
-        WHERE winner IS NOT NULL
+               batting_first, winner, batting_first_won,
+               win_margin_type, win_margin
+        FROM gold.fact_matches
         ORDER BY match_date
     """
     with get_connection() as conn:
@@ -82,7 +76,8 @@ def main() -> None:
     col1, col2, col3 = st.columns(3)
     col1.metric("Matches loaded", f"{len(df):,}")
     col2.metric("Seasons", df["season"].nunique())
-    col3.metric("Bat-first win %", "—", help="Rebuilt via dbt in Chunk 4.3")
+    bat_first_win_pct = 100.0 * df["batting_first_won"].mean()
+    col3.metric("Bat-first win %", f"{bat_first_win_pct:.1f}%")
 
     st.divider()
 
@@ -91,7 +86,15 @@ def main() -> None:
     by_season = df.groupby("season").size().reset_index(name="matches")
     st.bar_chart(by_season, x="season", y="matches")
 
-    # Bat-first-by-season chart returns once dbt rebuilds gold.fact_matches (Chunk 4.3).
+    st.subheader("Batting first: win rate by season")
+    bf_by_season = (
+        df.groupby("season")["batting_first_won"]
+        .agg(["mean", "count"])
+        .reset_index()
+        .rename(columns={"mean": "bat_first_win_rate", "count": "matches"})
+    )
+    bf_by_season["bat_first_win_rate"] = (bf_by_season["bat_first_win_rate"] * 100).round(1)
+    st.bar_chart(bf_by_season, x="season", y="bat_first_win_rate")
 
     # Phase 3 addition: upcoming IPL matches from CricketData
     st.divider()

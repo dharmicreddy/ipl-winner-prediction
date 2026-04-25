@@ -18,6 +18,7 @@ data/
 *.parquet
 *.csv
 !tests/**/*.csv
+!warehouse/seeds/*.csv
 mlruns/
 models/*.pkl
 models/*.joblib

@@ -24,3 +24,11 @@ models:
     gold:
       +schema: gold
       +materialized: view
+
+seeds:
+  ipl_warehouse:
+    +schema: dbt_build
+    +column_types:
+      team_variant: text
+      team_canonical: text
+      team_short_name: text

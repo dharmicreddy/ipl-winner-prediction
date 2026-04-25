@@ -61,6 +61,19 @@ flowchart LR
 **Read path:** sources -> bronze -> silver -> gold -> features -> model -> dashboard.
 **Orchestration:** GitHub Actions runs the pipeline weekly. Airflow DAGs exist locally for demonstration.
 
+## dbt warehouse
+
+The data warehouse is built via [dbt](https://www.getdbt.com/) with all models defined in `warehouse/`. Run `dbt build --project-dir warehouse` to rebuild silver and gold layers, run all data tests, and load the team-canonical seed.
+
+![dbt lineage graph](docs/img/dbt_lineage.png)
+
+**Layers:**
+- **silver_raw** (Python-populated): typed rows ingested from Cricsheet, Wikipedia, and CricketData.org
+- **silver** (dbt views): cleaned views over silver_raw, source for the gold layer
+- **gold** (dbt views): analytical models with derived columns (e.g. `batting_first_won`), entity-resolved teams via the `team_canonical` seed, and a star schema (`fact_matches`, `fact_ball_by_ball`, `dim_teams`, `dim_venues`, `dim_players`)
+
+A snapshot model (`warehouse/snapshots/dim_teams_snapshot.sql`) tracks team rebrandings (e.g. "Royal Challengers Bangalore" → "Royal Challengers Bengaluru") with SCD Type 2 semantics. To explore model documentation interactively: `dbt docs generate --project-dir warehouse && dbt docs serve --project-dir warehouse`.
+
 ## Tech stack
 
 | Layer | Choice |

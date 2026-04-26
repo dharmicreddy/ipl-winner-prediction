@@ -98,15 +98,38 @@ with DAG(
         bash_command=f"cd {TASK_CWD} && python -m ingestion.cricketdata.fixtures_parser",
     )
 
+    # --- Warehouse build (dbt models: silver, gold, features) ---
+    dbt_build = BashOperator(
+        task_id="dbt_build",
+        bash_command=f"cd {TASK_CWD} && dbt build --project-dir warehouse",
+        execution_timeout=timedelta(minutes=15),
+    )
+
+    # --- Model training (XGBoost with grid search + calibration) ---
+    train_xgboost = BashOperator(
+        task_id="train_xgboost",
+        bash_command=f"cd {TASK_CWD} && python -m models.train_xgboost",
+        execution_timeout=timedelta(minutes=15),
+    )
+
+    # --- Calibration analysis (reliability diagram + ECE) ---
+    calibration = BashOperator(
+        task_id="calibration",
+        bash_command=f"cd {TASK_CWD} && python -m models.calibration_analysis",
+    )
+
     end = EmptyOperator(task_id="end")
 
     # --- Dependency graph ---
     # All three source chains run in parallel after db_migrate.
     # Each chain is internally sequential (download/fetch -> load -> parse).
+    # After ingestion converges, dbt builds the warehouse, then we train
+    # and analyze calibration sequentially.
     start >> db_migrate
 
     db_migrate >> cricsheet_download >> cricsheet_load_bronze >> cricsheet_parse_silver
     db_migrate >> wikipedia_fetch >> wikipedia_parse
     db_migrate >> cricketdata_fetch >> cricketdata_parse
 
-    [cricsheet_parse_silver, wikipedia_parse, cricketdata_parse] >> end
+    [cricsheet_parse_silver, wikipedia_parse, cricketdata_parse] >> dbt_build
+    dbt_build >> train_xgboost >> calibration >> end

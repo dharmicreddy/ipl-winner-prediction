@@ -35,6 +35,9 @@ x-airflow-common: &airflow-common
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ipl_local_dev}
     POSTGRES_DB: ${POSTGRES_DB:-ipl}
     DBT_PROFILES_DIR: /opt/airflow/project/warehouse
+    DBT_LOG_PATH: /opt/airflow/project/data/dbt_logs
+    DBT_TARGET_PATH: /opt/airflow/project/data/dbt_target
+    MLFLOW_TRACKING_URI: file:///opt/airflow/project/data/mlruns
     CRICKETDATA_API_KEY: ${CRICKETDATA_API_KEY:-}
     PYTHONPATH: /opt/airflow/project
   volumes:
@@ -43,6 +46,8 @@ x-airflow-common: &airflow-common
     - ../orchestration/airflow/plugins:/opt/airflow/plugins
     - ..:/opt/airflow/project:ro
     - ../data:/opt/airflow/project/data
+    - ../data/mlruns:/opt/airflow/project/mlruns
+    - ../docs/img:/opt/airflow/project/docs/img
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     airflow-postgres:

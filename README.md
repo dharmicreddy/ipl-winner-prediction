@@ -2,7 +2,7 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 4 — dbt warehouse (complete). Next: Phase 5 — Feature engineering.
+**Status:** Phase 6 — Modeling, walk-forward eval, calibration (complete). Next: Phase 7 — Orchestration.
 
 ## Quick start
 
@@ -79,6 +79,26 @@ The data warehouse is built via [dbt](https://www.getdbt.com/) with all models d
 
 A snapshot model (`warehouse/snapshots/dim_teams_snapshot.sql`) tracks team rebrandings (e.g. "Royal Challengers Bangalore" → "Royal Challengers Bengaluru") with SCD Type 2 semantics. To explore model documentation interactively: `dbt docs generate --project-dir warehouse && dbt docs serve --project-dir warehouse`.
 
+## Modeling
+
+Three classifiers compared on a strict walk-forward split (train: 2022, val: early 2023, holdout: late 2023 + 2024):
+
+| Model | Holdout Accuracy | Brier Score | ECE |
+|---|---|---|---|
+| Majority-class baseline | 0.500 | 0.250 | 0.000 |
+| Logistic regression (calibrated) | 0.529 | 0.250 | 0.063 |
+| **XGBoost (calibrated)** | **0.598** | 0.252 | 0.091 |
+
+XGBoost beats baseline by **9.8pp on accuracy**. Calibration is imperfect — see [`docs/img/calibration_holdout.png`](docs/img/calibration_holdout.png) and [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) for the honest writeup.
+
+![Reliability diagram](docs/img/calibration_holdout.png)
+
+All runs tracked in MLflow at `./mlruns`. View with:
+
+```bash
+mlflow ui --backend-store-uri ./mlruns --port 5000
+```
+
 ## Tech stack
 
 | Layer | Choice |
@@ -123,9 +143,9 @@ ipl-winner-prediction/
 | 2 | Historical backfill (Cricsheet) | Complete |
 | 3 | Incremental API ingestion | Complete |
 | 4 | dbt warehouse | Complete |
-| 5 | Feature engineering | Next |
-| 6 | Modeling + calibration | Pending |
-| 7 | Orchestration | Pending |
+| 5 | Feature engineering | Complate |
+| 6 | Modeling + calibration | Complete |
+| 7 | Orchestration | Next |
 | 8 | Dashboard + write-up | Pending |
 
 End of Phase 4: dbt-managed silver + gold layers with star schema, SCD-2 snapshots, and 52 passing data tests. The dashboard reads bat-first metrics directly from `gold.fact_matches`.

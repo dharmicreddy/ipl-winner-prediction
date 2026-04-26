@@ -40,3 +40,6 @@ warehouse/.user.yml
 
 # Docker
 docker/postgres-data/
+
+mlruns/
+mlflow.db

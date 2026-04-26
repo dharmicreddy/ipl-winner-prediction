@@ -98,6 +98,9 @@ jobs:
         run: python -m ingestion.cricketdata.fixtures_parser
 
       # --- Warehouse build (dbt models: silver, gold, features) ---
+      - name: dbt deps
+        run: dbt deps --project-dir warehouse
+
       - name: dbt build
         run: dbt build --project-dir warehouse
 

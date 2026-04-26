@@ -1,0 +1,150 @@
+# Weekly IPL prediction pipeline
+#
+# Per ADR-001 and Issue #6: Airflow is the local demo; this GitHub Actions
+# workflow is the actual production schedule. Runs every Tuesday at 6am UTC
+# during IPL season (March-May), plus on manual trigger.
+#
+# Architecture:
+#   - Spins up an ephemeral Postgres 16 in a service container
+#   - Runs the same Python entrypoints as Airflow DAG (no duplicate logic)
+#   - Database state is discarded after each run (ephemeral CI smoke test)
+#   - Real persistent forecasts are out of scope; would require Neon/RDS
+#
+# Failure alerting: GitHub emails the owner when a workflow run fails.
+
+name: Weekly pipeline
+
+on:
+  # Tuesdays at 06:00 UTC, March through May (IPL season).
+  # Cron syntax: minute hour day-of-month month day-of-week
+  schedule:
+    - cron: "0 6 * * 2"
+  # Manual trigger from the Actions tab; useful for testing.
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ipl
+          POSTGRES_PASSWORD: ipl_ci_password
+          POSTGRES_DB: ipl
+        ports:
+          - 5432:5432
+        # Wait for postgres to actually be ready before our steps run.
+        options: >-
+          --health-cmd "pg_isready -U ipl -d ipl"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Connection details for our Python code.
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ipl
+      POSTGRES_PASSWORD: ipl_ci_password
+      POSTGRES_DB: ipl
+      # External API key from secrets.
+      CRICKETDATA_API_KEY: ${{ secrets.CRICKETDATA_API_KEY }}
+      # dbt configuration.
+      DBT_PROFILES_DIR: ./warehouse
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Initialize database schema
+        run: python -m ingestion.db.migrate
+
+      # --- Cricsheet ingestion chain ---
+      - name: Cricsheet — download and extract
+        run: python -m ingestion.cricsheet.downloader
+
+      - name: Cricsheet — load bronze
+        run: python -m ingestion.cricsheet.bronze_loader
+
+      - name: Cricsheet — parse silver
+        run: python -m ingestion.cricsheet.silver_parser
+
+      # --- Wikipedia ingestion chain ---
+      - name: Wikipedia — fetch venues
+        run: python -m ingestion.wikipedia.venue_client
+
+      - name: Wikipedia — parse venues
+        run: python -m ingestion.wikipedia.venue_parser
+
+      # --- CricketData ingestion chain ---
+      - name: CricketData — fetch fixtures
+        run: python -m ingestion.cricketdata.fixtures_client
+
+      - name: CricketData — parse fixtures
+        run: python -m ingestion.cricketdata.fixtures_parser
+
+      # --- Warehouse build (dbt models: silver, gold, features) ---
+      - name: dbt build
+        run: dbt build --project-dir warehouse
+
+      # --- Model training and calibration analysis ---
+      - name: Train XGBoost classifier
+        run: python -m models.train_xgboost
+
+      - name: Calibration analysis
+        run: python -m models.calibration_analysis
+
+      # --- Final sanity check ---
+      - name: Verify expected row counts
+        run: |
+          python -c "
+          import psycopg
+          conn = psycopg.connect(
+              host='localhost',
+              port=5432,
+              user='ipl',
+              password='ipl_ci_password',
+              dbname='ipl',
+          )
+          with conn.cursor() as cur:
+              cur.execute('SELECT count(*) FROM gold.fact_matches')
+              fact_count = cur.fetchone()[0]
+              cur.execute('SELECT count(*) FROM features.features__match_set')
+              features_count = cur.fetchone()[0]
+          assert fact_count == 218, f'expected 218 fact_matches, got {fact_count}'
+          assert features_count == 218, f'expected 218 features rows, got {features_count}'
+          print(f'Pipeline OK: {fact_count} fact_matches, {features_count} feature rows')
+          "
+
+      # --- Upload artifacts so we can inspect runs in the Actions tab ---
+      - name: Upload reliability diagram
+        uses: actions/upload-artifact@v4
+        if: always()  # upload even if the model step failed
+        with:
+          name: calibration-diagram-${{ github.run_number }}
+          path: docs/img/calibration_holdout.png
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload MLflow runs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mlflow-runs-${{ github.run_number }}
+          path: mlruns/
+          if-no-files-found: warn
+          retention-days: 30

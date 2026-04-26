@@ -1,0 +1,139 @@
+# Airflow stack — local demo only, not for production.
+# LocalExecutor: webserver and scheduler share a Postgres metadata DB.
+# No Redis, no separate workers — tasks run as scheduler subprocesses.
+#
+# Spin up:
+#   docker compose -f docker/airflow-compose.yml --env-file .env up -d
+#
+# Then visit http://localhost:8080 (admin / admin)
+#
+# Tear down (keeps data):
+#   docker compose -f docker/airflow-compose.yml down
+#
+# Tear down (wipes Airflow's metadata DB):
+#   docker compose -f docker/airflow-compose.yml down -v
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.10.2-python3.11
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    # Install our project's deps inside the Airflow worker so DAG tasks can run.
+    _PIP_ADDITIONAL_REQUIREMENTS: >-
+      psycopg[binary]>=3.2 pydantic>=2.8 httpx>=0.27 tenacity>=9.0
+      pyyaml>=6.0 python-dotenv>=1.0 dbt-core>=1.8 dbt-postgres>=1.8
+      pandas>=2.2 scikit-learn>=1.4 xgboost>=2.0 mlflow>=2.10 matplotlib>=3.8
+    # Pass our app's Postgres connection so DAG tasks talk to it via shared network.
+    POSTGRES_HOST: ipl-postgres
+    POSTGRES_PORT: 5432
+    POSTGRES_USER: ${POSTGRES_USER:-ipl}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ipl_local_dev}
+    POSTGRES_DB: ${POSTGRES_DB:-ipl}
+    DBT_PROFILES_DIR: /opt/airflow/project/warehouse
+    DBT_LOG_PATH: /opt/airflow/project/data/dbt_logs
+    DBT_TARGET_PATH: /opt/airflow/project/data/dbt_target
+    MLFLOW_TRACKING_URI: file:///opt/airflow/project/data/mlruns
+    CRICKETDATA_API_KEY: ${CRICKETDATA_API_KEY:-}
+    PYTHONPATH: /opt/airflow/project
+  volumes:
+    - ../orchestration/airflow/dags:/opt/airflow/dags
+    - ../orchestration/airflow/logs:/opt/airflow/logs
+    - ../orchestration/airflow/plugins:/opt/airflow/plugins
+    - ..:/opt/airflow/project:ro
+    - ../data:/opt/airflow/project/data
+    - ../data/mlruns:/opt/airflow/project/mlruns
+    - ../docs/img:/opt/airflow/project/docs/img
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+  networks:
+    - airflow-net
+    - ipl-net
+
+services:
+  airflow-postgres:
+    image: postgres:16-alpine
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - airflow-net
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com \
+          --password admin || true
+    user: "0:0"
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$${HOSTNAME}\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  airflow-postgres-data:
+
+networks:
+  airflow-net:
+    name: airflow-net
+  ipl-net:
+    external: true

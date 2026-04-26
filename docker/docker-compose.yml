@@ -16,7 +16,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - ipl-net
 
 volumes:
   postgres-data:
     name: ipl-postgres-data
+
+networks:
+  ipl-net:
+    name: ipl-net

@@ -13,6 +13,10 @@ venv/
 
 # Data & artifacts — never committed
 data/
+!dashboard/data/
+!dashboard/data/.gitignore
+!dashboard/data/ipl.sqlite
+!dashboard/data/model.pkl
 *.db
 *.duckdb
 *.parquet

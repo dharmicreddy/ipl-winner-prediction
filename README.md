@@ -2,7 +2,9 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 6 — Modeling, walk-forward eval, calibration (complete). Next: Phase 7 — Orchestration.
+**Status:** Phase 7 — Orchestration (complete). Next: Phase 8 — Dashboard + write-up.
+
+[![Weekly Pipeline](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml/badge.svg)](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml)
 
 ## Quick start
 
@@ -99,6 +101,60 @@ All runs tracked in MLflow at `./mlruns`. View with:
 mlflow ui --backend-store-uri ./mlruns --port 5000
 ```
 
+## Orchestration
+
+The full pipeline runs two ways with **shared Python entrypoints — no duplicate logic**.
+
+### DAG structure
+
+```mermaid
+flowchart TD
+    start([start]) --> migrate[db_migrate]
+    migrate --> cs_dl[cricsheet_download]
+    migrate --> wiki_fetch[wikipedia_fetch]
+    migrate --> cd_fetch[cricketdata_fetch]
+    cs_dl --> cs_load[cricsheet_load_bronze]
+    cs_load --> cs_parse[cricsheet_parse_silver]
+    wiki_fetch --> wiki_parse[wikipedia_parse]
+    cd_fetch --> cd_parse[cricketdata_parse]
+    cs_parse --> dbt[dbt_build]
+    wiki_parse --> dbt
+    cd_parse --> dbt
+    dbt --> train[train_xgboost]
+    train --> calib[calibration]
+    calib --> ending([end])
+```
+
+### GitHub Actions (production)
+
+`.github/workflows/weekly_pipeline.yml` runs the full pipeline weekly.
+
+- **Trigger**: cron `0 6 * * 2` (Tuesdays at 06:00 UTC, IPL season) or manually via the Actions tab
+- **Environment**: ephemeral Postgres 16 service container; fresh state per run
+- **Secrets**: `CRICKETDATA_API_KEY` stored in GitHub Actions secrets
+- **Artifacts**: each run uploads the calibration reliability diagram and MLflow runs as downloadable artifacts (30-day retention)
+- **Failure alerting**: GitHub emails the repository owner on workflow failure
+
+> **Note**: GitHub Actions cron schedules are best-effort; runs may be delayed by up to ~1 hour during peak load on the free tier. For production-grade scheduling, a paid scheduler (Cloud Scheduler, Cloud Run Jobs, etc.) would be more reliable. For this project's portfolio purpose, weekly best-effort is adequate.
+
+### Airflow (local demo)
+
+Airflow runs locally for demonstration purposes. The same `ipl_pipeline` DAG with the same task definitions runs both inside Airflow and inside GitHub Actions.
+
+```bash
+# Bring up the application Postgres
+docker compose -f docker/docker-compose.yml --env-file .env up -d
+
+# Bring up the Airflow stack (LocalExecutor; ~3-4 min first boot)
+docker compose -f docker/airflow-compose.yml --env-file .env up -d
+
+# Visit http://localhost:8080 (admin / admin) and trigger the DAG
+# Or trigger via CLI:
+docker compose -f docker/airflow-compose.yml exec airflow-scheduler airflow dags trigger ipl_pipeline
+```
+
+The Airflow stack uses LocalExecutor (one webserver, one scheduler, one Postgres metadata DB). Code is mounted read-only; specific writable paths are configured for dbt logs (`DBT_LOG_PATH`), dbt build artifacts (`DBT_TARGET_PATH`), MLflow runs, and the calibration PNG. See [ADR-001](docs/decisions/001-hosting-and-orchestration.md) for the rationale on running Airflow locally vs. paid cloud.
+
 ## Tech stack
 
 | Layer | Choice |
@@ -143,12 +199,12 @@ ipl-winner-prediction/
 | 2 | Historical backfill (Cricsheet) | Complete |
 | 3 | Incremental API ingestion | Complete |
 | 4 | dbt warehouse | Complete |
-| 5 | Feature engineering | Complate |
+| 5 | Feature engineering | Complete |
 | 6 | Modeling + calibration | Complete |
-| 7 | Orchestration | Next |
-| 8 | Dashboard + write-up | Pending |
+| 7 | Orchestration | Complete |
+| 8 | Dashboard + write-up | Next |
 
-End of Phase 4: dbt-managed silver + gold layers with star schema, SCD-2 snapshots, and 52 passing data tests. The dashboard reads bat-first metrics directly from `gold.fact_matches`.
+End of Phase 7: A scheduled orchestration pipeline runs weekly via GitHub Actions, with a local Airflow demonstration. All ingestion, transformation, model training, and calibration analysis is automated end-to-end. Phase 8 will rewrite the dashboard and add a project write-up.
 
 ## Attribution
 

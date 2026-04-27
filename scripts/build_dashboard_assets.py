@@ -151,10 +151,110 @@ def train_and_pickle_model() -> None:
     logger.info("Wrote %s (%.1f KB)", MODEL_PATH, size_kb)
 
 
+def export_holdout_predictions() -> None:
+    """Run the trained model on the holdout split and store predictions.
+
+    The Calibration page reads this table to render the reliability diagram
+    without re-running the model on every page load.
+    """
+    logger.info("Computing holdout predictions for calibration page...")
+
+    train, val, holdout, encoder = build_splits()
+
+    # Re-instantiate the same model architecture used in
+    # train_and_pickle_model(). build_splits() is deterministic, so a fresh
+    # fit produces the same calibrated classifier.
+    base = XGBClassifier(
+        n_estimators=50,
+        max_depth=3,
+        learning_rate=0.05,
+        min_child_weight=1,
+        tree_method="hist",
+        eval_metric="logloss",
+        random_state=42,
+        n_jobs=1,
+    )
+    classifier = CalibratedClassifierCV(estimator=base, method="sigmoid", cv=3)
+    classifier.fit(train.X, train.y)
+
+    holdout_proba = classifier.predict_proba(holdout.X)[:, 1]
+
+    # Pull the team/venue/date metadata for these match_ids from gold.
+    holdout_ids_str = ",".join(f"'{mid}'" for mid in holdout.match_ids)
+    metadata_query = f"""
+        SELECT match_id, match_date, team_home, team_away, venue,
+               batting_first_won
+        FROM gold.fact_matches
+        WHERE match_id IN ({holdout_ids_str})
+    """
+    with get_connection() as conn:
+        metadata_df = pd.read_sql(metadata_query, conn)
+
+    # Build the predictions DataFrame by joining match_ids with predictions.
+    predictions_df = pd.DataFrame(
+        {
+            "match_id": holdout.match_ids,
+            "predicted_probability": holdout_proba,
+            "actual_outcome": holdout.y,
+        }
+    )
+
+    df = predictions_df.merge(metadata_df, on="match_id", how="left")
+    # Ensure the column order is stable for the Calibration page.
+    df = df[
+        [
+            "match_id",
+            "match_date",
+            "team_home",
+            "team_away",
+            "venue",
+            "predicted_probability",
+            "actual_outcome",
+        ]
+    ]
+
+    # Write to SQLite (for Streamlit Cloud deployment)
+    sqlite_conn = sqlite3.connect(str(SQLITE_PATH))
+    try:
+        df.to_sql(
+            "holdout_predictions",
+            sqlite_conn,
+            if_exists="replace",
+            index=False,
+        )
+    finally:
+        sqlite_conn.commit()
+        sqlite_conn.close()
+
+    # Also write to Postgres (so the dashboard works in local Postgres mode too)
+    import os
+
+    from sqlalchemy import create_engine
+
+    pg_url = (
+        f"postgresql+psycopg://{os.getenv('POSTGRES_USER')}:"
+        f"{os.getenv('POSTGRES_PASSWORD')}@"
+        f"{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', '5432')}/"
+        f"{os.getenv('POSTGRES_DB')}"
+    )
+    engine = create_engine(pg_url)
+    with engine.begin() as conn:
+        df.to_sql(
+            "holdout_predictions",
+            conn,
+            if_exists="replace",
+            index=False,
+            schema="public",
+        )
+
+    logger.info("Wrote holdout_predictions table (%d rows) to both SQLite and Postgres", len(df))
+
+
 def main() -> None:
     logger.info("Building dashboard assets...")
     export_sqlite()
     train_and_pickle_model()
+    export_holdout_predictions()
     logger.info("Done. Commit dashboard/data/ to deploy.")
 
 

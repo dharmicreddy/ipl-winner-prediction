@@ -2,9 +2,8 @@
 
 End-to-end data engineering pipeline for IPL match prediction. Built on **licensed open data and official APIs only** — no Terms-of-Service compromises. Demonstrates ingestion, warehousing, transformation, ML, and serving on free-tier tooling.
 
-**Status:** Phase 7 — Orchestration (complete). Next: Phase 8 — Dashboard + write-up.
-
-[![Weekly Pipeline](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml/badge.svg)](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml)
+**Status:** Complete (all 8 phases shipped).
+🚀 **[Live demo](https://ipl-winner-prediction-sample.streamlit.app/)** • [![Weekly Pipeline](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml/badge.svg)](https://github.com/dharmicreddy/ipl-winner-prediction/actions/workflows/weekly_pipeline.yml)
 
 ## Quick start
 
@@ -167,6 +166,19 @@ The Airflow stack uses LocalExecutor (one webserver, one scheduler, one Postgres
 | Dashboard | Streamlit Community Cloud |
 | CI | GitHub Actions |
 
+## Live dashboard
+
+The dashboard is deployed to Streamlit Community Cloud:
+**[ipl-winner-prediction-sample.streamlit.app](https://ipl-winner-prediction-sample.streamlit.app/)**
+
+Three interactive pages:
+
+- **Predict** — pick two teams, a venue, and a match date; the calibrated XGBoost classifier returns a win probability with confidence breakdown. All features are computed strictly as-of the match date — no leakage.
+- **Calibration** — interactive Plotly reliability diagram showing how well predicted probabilities match actual win rates on the 102-match holdout. Includes ECE (0.091) and Brier score (0.252) with comparison vs. baseline.
+- **Data** — match-level explorer showing bat-first win rates and seasonal trends across 218 matches.
+
+The deployed app reads from a bundled SQLite snapshot of the warehouse (committed at `dashboard/data/ipl.sqlite`). The same code runs locally against Postgres when `POSTGRES_HOST` is set — see `dashboard/lib/data.py`. To refresh the snapshot, run `python -m scripts.build_dashboard_assets` and commit the regenerated files.
+
 See the ADRs in `docs/decisions/` for the rationale behind each choice.
 
 ## Repository layout
@@ -202,9 +214,9 @@ ipl-winner-prediction/
 | 5 | Feature engineering | Complete |
 | 6 | Modeling + calibration | Complete |
 | 7 | Orchestration | Complete |
-| 8 | Dashboard + write-up | Next |
+| 8 | Dashboard + write-up | Complete |
 
-End of Phase 7: A scheduled orchestration pipeline runs weekly via GitHub Actions, with a local Airflow demonstration. All ingestion, transformation, model training, and calibration analysis is automated end-to-end. Phase 8 will rewrite the dashboard and add a project write-up.
+End of Phase 8: A multipage Streamlit dashboard is deployed to Streamlit Cloud with interactive prediction, calibration analysis, and data exploration. The deployed app reads from a SQLite snapshot bundled in the repo, while local development runs against Postgres. See [`docs/WRITEUP.md`](docs/WRITEUP.md) for a narrative summary of the project decisions and lessons learned.
 
 ## Attribution
 
